@@ -14,23 +14,14 @@ from PyQt5 import QtCore as QTC
 from PyQt5 import QtGui as QTG
 from PyQt5.QtCore import QTimer
 
-STATUS_PATH = "Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\DefaultAccount\\Current\\default$windows.data.bluelightreduction.bluelightreductionstate\\windows.data.bluelightreduction.bluelightreductionstate"
-STATE_VALUE_NAME = "Data"
+
+#adress of registriy for greyscale filter
 GREY_PATH = "Software\Microsoft\ColorFiltering"
-def get_night_light_state_data():
-    try:
-        hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, STATUS_PATH, 0, winreg.KEY_READ)
-        value, regtype = winreg.QueryValueEx(hKey, STATE_VALUE_NAME)
-        winreg.CloseKey(hKey)
 
-        if regtype == winreg.REG_BINARY:
-            return value
-    except:
-        pass
-    return False
 
+#get night light state
 def is_night_light_on():
-    try:
+    try: #adress for nightlight registry entry
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\DefaultAccount\\Current\\default$windows.data.bluelightreduction.bluelightreductionstate\\windows.data.bluelightreduction.bluelightreductionstate")
         value = winreg.QueryValueEx(key,'Data')
         winreg.CloseKey(key)
@@ -41,7 +32,7 @@ def is_night_light_on():
     except:
         pass
     return False
-    
+#get greyscale state
 def get_greyscale_data():
     try:
         hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, GREY_PATH, 0, winreg.KEY_READ)
@@ -54,10 +45,8 @@ def get_greyscale_data():
         pass
     return False
     
-
-def blink_reminder():
-    
-    
+#function to remind you to blink (choose any message, color, size, duration of display. copy function and rename for additional reminder)
+def blink_reminder():    
     app = QT.QApplication([])
     
     # Create the custom message box
@@ -65,18 +54,20 @@ def blink_reminder():
         def __init__(self, *args, **kwargs):
             super().__init__()
             self.setWindowTitle('Pop-up Title')
+            #set size
             self.setFixedSize(1200, 200)
+            #make everything translucent exept for the message
             self.setWindowFlags(QTC.Qt.FramelessWindowHint)
             self.setAttribute(QTC.Qt.WA_TranslucentBackground)
             self.setWindowFlags(QTC.Qt.FramelessWindowHint | QTC.Qt.WindowStaysOnTopHint)
     
-            # Create the label
+            # set message to display
             label = QT.QLabel('!BLINK YOUR EYES!', self)
             label.setAlignment(QTC.Qt.AlignCenter)
-            
+            #set primary color
             label.setStyleSheet('color: orange')
     
-            # Set the label outline color
+            # Set message outline offset, blur radius, color
             effect = QT.QGraphicsDropShadowEffect(self)
             effect.setOffset(0, 0)
             effect.setBlurRadius(30)
@@ -101,11 +92,12 @@ def blink_reminder():
     
     
     
-    # Close the message box after 1 second
+    # Close the message afer 3000 ms (3 seconds)
     QTimer.singleShot(3000, app.messagebox.close)
     
     app.exec_()
-    
+
+#additional function, for documentaion refer to blink_reminder()
 def eye_reminder():
     
     
@@ -159,19 +151,24 @@ def eye_reminder():
 
 
 
-
+#initialize
 active = is_night_light_on()
+#main loop
 while True:
+    #check every 5 seconds if night light state or greyscale state has changed
     if is_night_light_on()==active and get_greyscale_data() == active:
         time.sleep(5)
+    #timer for eye reminder
     if (time.localtime(time.time()).tm_min+2)%20==0:
         eye_reminder()
         time.sleep(60)
         continue
+    #timer for blink reminder
     if time.localtime(time.time()).tm_min%5==0:
         blink_reminder()
         time.sleep(60)
         continue
+    #use shortcut to switch greyscale state if not matching
     elif is_night_light_on()== (not get_greyscale_data()):        
         pyautogui.hotkey("win","ctrl","c")
         time.sleep(2)
